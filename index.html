@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI海龟汤</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', 'SimHei', sans-serif;
+            background: linear-gradient(135deg, #050a14 0%, #0a1628 50%, #0d1b2a 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #e8eaf6;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* 星空容器 */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* 单颗星星 */
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle var(--duration) ease-in-out infinite;
+            opacity: 0;
+        }
+
+        @keyframes twinkle {
+            0%, 100% {
+                opacity: 0.2;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+        }
+
+        /* 流星 */
+        .meteor {
+            position: absolute;
+            width: 100px;
+            height: 2px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.8), transparent);
+            border-radius: 50%;
+            animation: meteor 3s linear infinite;
+            opacity: 0;
+        }
+
+        @keyframes meteor {
+            0% {
+                transform: translateX(0) translateY(0);
+                opacity: 0;
+            }
+            5% {
+                opacity: 1;
+            }
+            20% {
+                transform: translateX(-300px) translateY(200px);
+                opacity: 0;
+            }
+            100% {
+                transform: translateX(-300px) translateY(200px);
+                opacity: 0;
+            }
+        }
+
+        /* 迷雾效果 */
+        .fog {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 200%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.15;
+        }
+
+        .fog-layer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="rgba(100, 150, 255, 0.1)" filter="blur(20px)"/></svg>');
+            background-size: 400px 400px;
+            animation: fogMove 30s linear infinite;
+        }
+
+        .fog-layer:nth-child(2) {
+            animation-delay: -15s;
+            animation-duration: 40s;
+        }
+
+        @keyframes fogMove {
+            0% {
+                transform: translateX(0) translateY(0);
+            }
+            50% {
+                transform: translateX(-50px) translateY(20px);
+            }
+            100% {
+                transform: translateX(0) translateY(0);
+            }
+        }
+
+        .container {
+            text-align: center;
+            padding: 40px 30px;
+            max-width: 700px;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* 标题容器 */
+        .title-container {
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        /* 海龟图标 */
+        .turtle-icon {
+            font-size: clamp(3rem, 10vw, 5rem);
+            animation: turtleFloat 4s ease-in-out infinite;
+            filter: drop-shadow(0 0 15px rgba(100, 200, 255, 0.6));
+        }
+
+        @keyframes turtleFloat {
+            0%, 100% {
+                transform: translateY(0) rotate(0deg);
+            }
+            25% {
+                transform: translateY(-8px) rotate(-3deg);
+            }
+            75% {
+                transform: translateY(-5px) rotate(3deg);
+            }
+        }
+
+        /* 标题样式 */
+        .title {
+            font-size: clamp(2.5rem, 8vw, 4.5rem);
+            font-weight: bold;
+            background: linear-gradient(180deg, #e3f2fd 0%, #90caf9 30%, #64b5f6 70%, #42a5f5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 8px;
+            animation: titleGlow 2.5s ease-in-out infinite;
+            position: relative;
+        }
+
+        /* 标题发光外圈 */
+        .title::before {
+            content: 'AI海龟汤';
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: linear-gradient(180deg, #64b5f6 0%, #42a5f5 50%, #2196f3 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: blur(8px);
+            z-index: -1;
+            opacity: 0.7;
+            animation: titleGlowOuter 2.5s ease-in-out infinite;
+        }
+
+        @keyframes titleGlow {
+            0%, 100% {
+                filter: drop-shadow(0 0 10px rgba(100, 181, 246, 0.5))
+                        drop-shadow(0 0 20px rgba(66, 165, 245, 0.3))
+                        drop-shadow(0 0 40px rgba(33, 150, 243, 0.2));
+            }
+            50% {
+                filter: drop-shadow(0 0 20px rgba(100, 181, 246, 0.8))
+                        drop-shadow(0 0 40px rgba(66, 165, 245, 0.5))
+                        drop-shadow(0 0 60px rgba(33, 150, 243, 0.3));
+            }
+        }
+
+        @keyframes titleGlowOuter {
+            0%, 100% {
+                opacity: 0.5;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.8;
+                transform: scale(1.02);
+            }
+        }
+
+        /* 副标题 */
+        .subtitle {
+            font-size: clamp(1rem, 3vw, 1.3rem);
+            color: #90caf9;
+            margin-bottom: 40px;
+            letter-spacing: 4px;
+            opacity: 0.9;
+        }
+
+        /* 游戏介绍卡片 */
+        .intro-card {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(100, 181, 246, 0.25);
+            border-radius: 24px;
+            padding: 35px 30px;
+            margin-bottom: 40px;
+            box-shadow:
+                0 8px 32px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            animation: fadeInUp 1s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 游戏介绍主标题 */
+        .intro-title {
+            font-size: clamp(1.5rem, 5vw, 1.8rem);
+            color: #7dd3fc;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        .intro-title::before,
+        .intro-title::after {
+            content: '✨';
+            font-size: 1.6rem;
+        }
+
+        /* 分标题样式 */
+        .section-title {
+            font-size: clamp(1.15rem, 3.5vw, 1.35rem);
+            color: #93c5fd;
+            margin: 24px 0 14px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            padding-bottom: 8px;
+            border-bottom: 2px solid rgba(100, 181, 246, 0.2);
+        }
+
+        .section-title .icon {
+            font-size: 1.4rem;
+        }
+
+        /* 内容描述 */
+        .section-content {
+            font-size: clamp(0.95rem, 2.5vw, 1.05rem);
+            line-height: 1.9;
+            color: #e0e7ff;
+            padding: 0 8px;
+            margin-bottom: 8px;
+            text-align: left;
+        }
+
+        /* 游戏规则独立框 */
+        .rules-box {
+            background: rgba(30, 58, 138, 0.3);
+            border: 1px solid rgba(100, 181, 246, 0.3);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 8px;
+        }
+
+        /* 规则列表 */
+        .rules-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .rules-list li {
+            padding: 12px 12px 12px 20px;
+            margin-bottom: 10px;
+            font-size: clamp(0.9rem, 2.5vw, 1rem);
+            line-height: 1.7;
+            color: #d1d5db;
+            position: relative;
+            border-left: 2px solid rgba(100, 181, 246, 0.3);
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .rules-list li:last-child {
+            margin-bottom: 0;
+        }
+
+        .rules-list li:hover {
+            background: rgba(100, 181, 246, 0.08);
+            border-left-color: rgba(100, 181, 246, 0.8);
+            padding-left: 24px;
+        }
+
+        /* 规则序号 */
+        .rules-list li::before {
+            content: attr(data-index);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 22px;
+            height: 22px;
+            background: linear-gradient(135deg, rgba(100, 181, 246, 0.4), rgba(66, 165, 245, 0.4));
+            color: #fff;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        /* 开始游戏按钮 */
+        .start-btn {
+            background: linear-gradient(135deg, #3949ab 0%, #5c6bc0 50%, #7986cb 100%);
+            color: white;
+            border: none;
+            padding: 18px 60px;
+            font-size: clamp(1.1rem, 3.5vw, 1.4rem);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow:
+                0 4px 15px rgba(63, 81, 181, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            letter-spacing: 3px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .start-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                transparent,
+                rgba(255, 255, 255, 0.2),
+                transparent
+            );
+            transition: left 0.5s;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow:
+                0 8px 30px rgba(63, 81, 181, 0.6),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .start-btn:hover::before {
+            left: 100%;
+        }
+
+        .start-btn:active {
+            transform: translateY(-1px) scale(1);
+            box-shadow:
+                0 4px 15px rgba(63, 81, 181, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        /* 底部提示 */
+        .footer {
+            margin-top: 40px;
+            font-size: 0.9rem;
+            color: #5c6bc0;
+            opacity: 0.7;
+        }
+
+        /* 移动端适配 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 30px 20px;
+            }
+
+            .intro-card {
+                padding: 25px 20px;
+            }
+
+            .intro-title {
+                margin-bottom: 24px;
+            }
+
+            .section-title {
+                margin: 20px 0 12px 0;
+            }
+
+            .rules-box {
+                padding: 16px;
+            }
+
+            .start-btn {
+                padding: 15px 40px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .title {
+                letter-spacing: 4px;
+            }
+
+            .intro-card {
+                padding: 20px 15px;
+                border-radius: 18px;
+            }
+
+            .section-title {
+                font-size: 1.1rem;
+            }
+
+            .section-content {
+                font-size: 0.95rem;
+            }
+
+            .rules-list li {
+                font-size: 0.9rem;
+                padding: 10px 10px 10px 16px;
+            }
+
+            .rules-list li:hover {
+                padding-left: 18px;
+            }
+
+            .start-btn {
+                padding: 14px 35px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 星空背景 -->
+    <div class="stars" id="stars"></div>
+
+    <!-- 迷雾效果 -->
+    <div class="fog">
+        <div class="fog-layer"></div>
+        <div class="fog-layer"></div>
+    </div>
+
+    <div class="container">
+        <!-- 标题区域 -->
+        <div class="title-container">
+            <span class="turtle-icon">🐢</span>
+            <h1 class="title">AI海龟汤</h1>
+        </div>
+        <p class="subtitle">— 悬疑推理 · 智慧对决 —</p>
+
+        <!-- 游戏介绍卡片 -->
+        <div class="intro-card">
+            <h2 class="intro-title">游戏介绍</h2>
+
+            <!-- 什么是海龟汤 -->
+            <div class="section">
+                <h3 class="section-title">
+                    <span class="icon">🍲</span>
+                    什么是海龟汤？
+                </h3>
+                <p class="section-content">
+                    海龟汤，又称情境推理游戏，是一种神秘悬疑的解谜游戏。游戏会给出一个看似离奇或不可思议的故事结局，玩家需要通过不断提问来挖掘隐藏的真相，还原整个事件的来龙去脉。就像海龟汤一样，需要慢慢品味才能品尝到其中的味道。
+                </p>
+            </div>
+
+            <!-- 你的任务 -->
+            <div class="section">
+                <h3 class="section-title">
+                    <span class="icon">🎯</span>
+                    你的任务
+                </h3>
+                <p class="section-content">
+                    你将成为一名侦探，面对AI给出的神秘故事结局。通过不断提出恰当的问题，收集线索信息，运用你的逻辑推理能力和想象力，最终还原出完整的故事真相。每个故事都有其独特的逻辑和转折，需要你仔细思考每一个细节。
+                </p>
+            </div>
+
+            <!-- 游戏规则 -->
+            <div class="section">
+                <h3 class="section-title">
+                    <span class="icon">📜</span>
+                    游戏规则
+                </h3>
+                <div class="rules-box">
+                    <ul class="rules-list">
+                        <li data-index="1">AI会给出一个离奇、神秘的故事结局，你需要通过提问来还原整个故事的真相</li>
+                        <li data-index="2">你的问题必须是封闭式的（可以用"是"或"否"回答），AI会回答"是"、"否"或"无关"</li>
+                        <li data-index="3">根据AI的回答，继续提问，逐步拼凑出完整的故事情节</li>
+                        <li data-index="4">当你认为已经了解真相时，可以尝试直接说出完整故事</li>
+                        <li data-index="5">每个海龟汤都有其独特逻辑，发挥你的推理能力和想象力吧！</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <button class="start-btn" onclick="startGame()">开始游戏</button>
+
+        <p class="footer">准备好挑战你的推理能力了吗？</p>
+    </div>
+
+    <script>
+        // 生成星空
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            const starCount = 150;
+
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.width = Math.random() * 3 + 1 + 'px';
+                star.style.height = star.style.width;
+                star.style.setProperty('--duration', (Math.random() * 3 + 2) + 's');
+                star.style.animationDelay = Math.random() * 5 + 's';
+                starsContainer.appendChild(star);
+            }
+
+            // 添加几颗流星
+            for (let i = 0; i < 3; i++) {
+                const meteor = document.createElement('div');
+                meteor.className = 'meteor';
+                meteor.style.left = Math.random() * 60 + 40 + '%';
+                meteor.style.top = Math.random() * 30 + '%';
+                meteor.style.animationDelay = (i * 8 + Math.random() * 5) + 's';
+                starsContainer.appendChild(meteor);
+            }
+        }
+
+        // 开始游戏函数
+        function startGame() {
+            // 这里可以添加跳转到游戏页面的逻辑
+            alert('游戏即将开始！\n\n（此处可链接到实际游戏页面）');
+
+            // 如果有游戏页面，可以这样跳转：
+            // window.location.href = 'game.html';
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 创建星空
+            createStars();
+
+            // 页面淡入动画
+            document.body.style.opacity = '0';
+            setTimeout(function() {
+                document.body.style.transition = 'opacity 0.5s ease';
+                document.body.style.opacity = '1';
+            }, 100);
+        });
+
+        // 添加鼠标移动时的微妙背景效果
+        document.addEventListener('mousemove', function(e) {
+            const x = e.clientX / window.innerWidth;
+            const y = e.clientY / window.innerHeight;
+            document.body.style.background = `
+                linear-gradient(135deg,
+                    rgb(${5 + x * 8}, ${10 + y * 8}, ${20 + x * 5}) 0%,
+                    rgb(${10 + y * 5}, ${22 + x * 8}, ${40 + y * 5}) 50%,
+                    rgb(${13 + x * 3}, ${27 + y * 5}, ${42 + x * 8}) 100%
+                )
+            `;
+        });
+    </script>
+</body>
+</html>
